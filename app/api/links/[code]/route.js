@@ -30,3 +30,17 @@ export async function DELETE(request, { params }) {
   }
 }
 
+export async function GET(request, { params }) {
+  const { code } = await params;
+
+  const link = await prisma.link.findUnique({
+    where: { code },
+  });
+
+  if (!link) {
+    return Response.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  return Response.json(link, { status: 200 });
+}
+

@@ -1,4 +1,3 @@
-// app/healthz/route.js
 export async function GET() {
   return Response.json(
     {
