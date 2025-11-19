@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+TinyLink – URL Shortener
 
-## Getting Started
+A simple URL shortening service built with Next.js App Router, Neon Postgres, Prisma, and TailwindCSS.
 
-First, run the development server:
+📌 Features
 
-```bash
+Create short URLs with custom or auto-generated codes
+
+Code validation: [A-Za-z0-9]{6,8}
+
+Track click count and last clicked timestamp
+
+View per-link analytics
+
+Delete short links
+
+/healthz endpoint for health checks
+
+Database: Postgres (Neon + Vercel Integration)
+
+🚀 Tech Stack
+
+Frontend: Next.js App Router + Tailwind CSS
+
+Backend: Next.js API Routes
+
+Database: Neon PostgreSQL
+
+ORM: Prisma
+
+Deployment: Vercel
+
+🧩 API Endpoints
+Create Link
+
+POST /api/links
+
+List All Links
+
+GET /api/links
+
+Get Link Stats
+
+GET /api/links/:code
+
+Delete Link
+
+DELETE /api/links/:code
+
+Redirect Short URL
+
+GET /:code
+
+Health Check
+
+GET /healthz
+
+📦 Environment Variables
+
+Create .env file:
+
+DATABASE_URL=""
+NEXT_PUBLIC_BASE_URL=""
+
+
+In production, NEXT_PUBLIC_BASE_URL should be:
+
+https://your-vercel-url.vercel.app
+
+▶️ Running Locally
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+Open:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+http://localhost:3000/
 
-## Learn More
+🗄 Database Setup
+npx prisma migrate dev
+npx prisma generate
 
-To learn more about Next.js, take a look at the following resources:
+🧪 Testing Flow
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Create new link
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Click the short code
 
-## Deploy on Vercel
+Redirect works
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+/code/:code shows analytics
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Delete link
+
+/healthz returns JSON
+
+📤 Deployment (Vercel)
+
+Import GitHub repo into Vercel
+
+Attach Neon Postgres storage
+
+Add .env variables
+
+Deploy
+
+✨ Author
+
+Praveen – Full Stack Developer Assignment
+
+4️⃣ Add .env.example
+
+Create:
+
+.env.example
+
+
+Paste:
+
+DATABASE_URL="postgres://username:password@host/dbname?sslmode=require"
+NEXT_PUBLIC_BASE_URL="http://localhost:3000"
