@@ -23,6 +23,6 @@ export default async function CodeRedirectPage({ params }) {
     },
   });
 
-  // 302 redirect to the original URL
+  // redirect to the original URL (Next.js uses 307, which is equivalent to 302 for temporary redirects)
   redirect(link.url);
 }

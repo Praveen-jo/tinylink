@@ -16,6 +16,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -106,25 +108,39 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleDelete(codeToDelete) {
-    if (!confirm(`Delete link with code "${codeToDelete}"?`)) return;
+  function handleDeleteClick(codeToDelete) {
+    setDeleteConfirm(codeToDelete);
+  }
 
-    const res = await fetch(`/api/links/${codeToDelete}`, {
+  function handleDeleteCancel() {
+    setDeleteConfirm(null);
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteConfirm) return;
+
+    setDeleting(true);
+    const res = await fetch(`/api/links/${deleteConfirm}`, {
       method: 'DELETE',
     });
 
     if (res.ok) {
-      setLinks((prev) => prev.filter((l) => l.code !== codeToDelete));
-      setFilteredLinks((prev) => prev.filter((l) => l.code !== codeToDelete));
+      setLinks((prev) => prev.filter((l) => l.code !== deleteConfirm));
+      setFilteredLinks((prev) => prev.filter((l) => l.code !== deleteConfirm));
+      setDeleteConfirm(null);
+      setSuccess('Link deleted successfully');
+      setTimeout(() => setSuccess(''), 3000);
     } else {
-      alert('Failed to delete link');
+      setError('Failed to delete link');
+      setTimeout(() => setError(''), 3000);
     }
+    setDeleting(false);
   }
 
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
-      <main className="max-w-5xl mx-auto px-4 py-10">
+      <main className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-10">
         <header className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">
@@ -135,14 +151,14 @@ export default function DashboardPage() {
             </p>
           </div>
           <span className="text-xs text-slate-500">
-              Take-Home Assignment: TinyLink
+            Take-Home Assignment: TinyLink
           </span>
         </header>
 
         <section className="mb-8">
           <form
             onSubmit={handleSubmit}
-            className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl space-y-4"
+            className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-5 shadow-xl space-y-4"
           >
             <div className="flex flex-col gap-2">
               <label className="text-sm text-slate-300">
@@ -161,20 +177,20 @@ export default function DashboardPage() {
               <label className="text-sm text-slate-300">
                 Custom code (optional)
               </label>
-              <div className="flex gap-2 items-center">
-                <span className="text-xs bg-slate-950 border border-slate-800 px-2 py-1 rounded-lg">
+              <div className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+                <span className="text-xs bg-slate-950 border border-slate-800 px-2 py-1.5 rounded-lg break-all sm:break-normal sm:truncate min-w-0 sm:flex-shrink-0">
                   {baseUrl}/
                 </span>
                 <input
                   type="text"
                   placeholder="6–8 letters/numbers"
-                  className="flex-1 rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-sky-500"
+                  className="w-full sm:flex-1 rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-sky-500 min-w-0"
                   value={code}
                   onChange={(e) => setCode(e.target.value)}
                 />
               </div>
-              <p className="text-xs text-slate-500">
-                Must match: <code>[A-Za-z0-9]&#123;6,8&#125;</code>. Leave empty to auto-generate.
+              <p className="text-xs text-slate-500 break-words">
+                Must match: <code className="break-all">[A-Za-z0-9]&#123;6,8&#125;</code>. Leave empty to auto-generate.
               </p>
             </div>
 
@@ -193,14 +209,14 @@ export default function DashboardPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 inline-flex items-center justify-center rounded-xl bg-sky-500 hover:bg-sky-400 disabled:opacity-60 px-4 py-2 text-sm font-medium shadow-lg shadow-sky-500/20"
+              className="mt-2 w-full sm:w-auto inline-flex items-center justify-center rounded-xl bg-sky-500 hover:bg-sky-400 disabled:opacity-60 px-4 py-2.5 text-sm font-medium shadow-lg shadow-sky-500/20"
             >
               {loading ? 'Creating…' : 'Create short link'}
             </button>
           </form>
         </section>
 
-        <section className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <section className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-5 shadow-xl">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
             <h2 className="text-lg font-medium">All links</h2>
             <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -226,83 +242,157 @@ export default function DashboardPage() {
               No links match your search.
             </p>
           ) : (
-            <div className="overflow-x-auto text-sm">
-              <table className="min-w-full border-collapse">
-                <thead>
-                  <tr className="text-left text-xs uppercase text-slate-400 border-b border-slate-800">
-                    <th className="py-2 pr-4">Short URL</th>
-                    <th className="py-2 pr-4">Destination</th>
-                    <th className="py-2 pr-4">Clicks</th>
-                    <th className="py-2 pr-4">Last clicked</th>
-                    <th className="py-2 pr-2 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredLinks.map((link) => (
-                    <tr
-                      key={link.id}
-                      className="border-b border-slate-850 last:border-none"
-                    >
-                      <td className="py-2 pr-4 font-mono">
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={`/${link.code}`}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-sky-400 hover:text-sky-300"
-                          >
-                            {baseUrl}/{link.code}
-                          </a>
-                          <CopyButton text={`${baseUrl}/${link.code}`} />
-                        </div>
-                      </td>
-                      <td className="py-2 pr-4 max-w-xs truncate">
-                        <div className="flex items-center gap-2">
-                          <a
-                            href={link.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-slate-200 hover:text-sky-300 truncate"
-                          >
-                            {link.url}
-                          </a>
-                          <CopyButton text={link.url} />
-                        </div>
-                      </td>
-                      <td className="py-2 pr-4">{link.clicks}</td>
-                      <td className="py-2 pr-4">
-                        {link.lastClickedAt
-                          ? new Date(link.lastClickedAt).toLocaleString()
-                          : '—'}
-                      </td>
-                      <td className="py-2 pr-2">
-                        <div className="flex items-center justify-end gap-2">
-                          <Link
-                            href={`/code/${link.code}`}
-                            className="px-2 py-1 rounded-lg border border-slate-700 text-xs hover:border-sky-500 hover:text-sky-300"
-                          >
-                            Stats
-                          </Link>
-                          <button
-                            onClick={() => handleDelete(link.code)}
-                            className="px-2 py-1 rounded-lg border border-red-700 text-xs text-red-300 hover:bg-red-950/40"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
+            <>
+              {/* Mobile Card View */}
+              <div className="space-y-3 md:hidden">
+                {filteredLinks.map((link) => (
+                  <div
+                    key={link.id}
+                    className="bg-slate-950/50 border border-slate-800 rounded-xl p-4 space-y-3"
+                  >
+                    <div>
+                      <p className="text-xs text-slate-400 mb-1">Short URL</p>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`/${link.code}`}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-sky-400 hover:text-sky-300 font-mono text-sm break-all"
+                        >
+                          {baseUrl}/{link.code}
+                        </a>
+                        <CopyButton text={`${baseUrl}/${link.code}`} />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="text-xs text-slate-400 mb-1">Destination</p>
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-slate-200 hover:text-sky-300 text-sm break-all"
+                        >
+                          {link.url}
+                        </a>
+                        <CopyButton text={link.url} />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div>
+                        <p className="text-xs text-slate-400">Clicks</p>
+                        <p className="text-slate-200">{link.clicks}</p>
+                      </div>
+                      <div>
+                        <p className="text-xs text-slate-400">Created</p>
+                        <p className="text-slate-200 text-xs">
+                          {new Date(link.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-2 border-t border-slate-800">
+                      <Link
+                        href={`/code/${link.code}`}
+                        className="flex-1 text-center px-3 py-2 rounded-lg border border-slate-700 text-xs hover:border-sky-500 hover:text-sky-300"
+                      >
+                        Stats
+                      </Link>
+                      <button
+                        onClick={() => handleDeleteClick(link.code)}
+                        className="flex-1 px-3 py-2 rounded-lg border border-red-700 text-xs text-red-300 hover:bg-red-950/40"
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto text-sm">
+                <table className="min-w-full border-collapse">
+                  <thead>
+                    <tr className="text-left text-xs uppercase text-slate-400 border-b border-slate-800">
+                      <th className="py-2 pr-4">Short URL</th>
+                      <th className="py-2 pr-4">Destination</th>
+                      <th className="py-2 pr-4">Clicks</th>
+                      <th className="py-2 pr-4">Created</th>
+                      <th className="py-2 pr-2 text-right">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {filteredLinks.map((link) => (
+                      <tr
+                        key={link.id}
+                        className="border-b border-slate-850 last:border-none"
+                      >
+                        <td className="py-2 pr-4 font-mono">
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={`/${link.code}`}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-sky-400 hover:text-sky-300"
+                            >
+                              {baseUrl}/{link.code}
+                            </a>
+                            <CopyButton text={`${baseUrl}/${link.code}`} />
+                          </div>
+                        </td>
+                        <td className="py-2 pr-4 max-w-xs truncate">
+                          <div className="flex items-center gap-2">
+                            <a
+                              href={link.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-slate-200 hover:text-sky-300 truncate"
+                            >
+                              {link.url}
+                            </a>
+                            <CopyButton text={link.url} />
+                          </div>
+                        </td>
+                        <td className="py-2 pr-4">{link.clicks}</td>
+                        <td className="py-2 pr-4">
+                          {new Date(link.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
+                        </td>
+                        <td className="py-2 pr-2">
+                          <div className="flex items-center justify-end gap-2">
+                            <Link
+                              href={`/code/${link.code}`}
+                              className="px-2 py-1 rounded-lg border border-slate-700 text-xs hover:border-sky-500 hover:text-sky-300"
+                            >
+                              Stats
+                            </Link>
+                            <button
+                              onClick={() => handleDeleteClick(link.code)}
+                              className="px-2 py-1 rounded-lg border border-red-700 text-xs text-red-300 hover:bg-red-950/40"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </section>
 
         <footer className="mt-11 pt-8 border-t border-slate-800 text-center">
           <p className="text-sm text-slate-400">
             Created by{' '}
-              Praveen
+            Praveen #Naukri1125
             {' '}–{' '}
             <a
               href="https://github.com/Praveen-jo/tinylink"
@@ -315,6 +405,36 @@ export default function DashboardPage() {
           </p>
         </footer>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl max-w-md w-full">
+            <h3 className="text-lg font-semibold mb-2">Delete Link</h3>
+            <p className="text-sm text-slate-300 mb-6">
+              Are you sure you want to delete the link with code{' '}
+              <span className="font-mono text-sky-400">"{deleteConfirm}"</span>?
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteCancel}
+                disabled={deleting}
+                className="flex-1 px-4 py-2 rounded-xl border border-slate-700 text-sm hover:border-slate-600 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleting}
+                className="flex-1 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-sm font-medium disabled:opacity-50"
+              >
+                {deleting ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
