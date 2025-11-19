@@ -3,13 +3,16 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import CopyButton from './CopyButton';
 
 const CODE_REGEX = /^[A-Za-z0-9]{6,8}$/;
 
 export default function DashboardPage() {
   const [links, setLinks] = useState([]);
+  const [filteredLinks, setFilteredLinks] = useState([]);
   const [url, setUrl] = useState('');
   const [code, setCode] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -26,6 +29,7 @@ export default function DashboardPage() {
       }
       const data = await res.json();
       setLinks(data);
+      setFilteredLinks(data);
     } catch (err) {
       console.error('Error loading links:', err);
     }
@@ -34,6 +38,21 @@ export default function DashboardPage() {
   useEffect(() => {
     loadLinks();
   }, []);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setFilteredLinks(links);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const filtered = links.filter(
+      (link) =>
+        link.code.toLowerCase().includes(query) ||
+        link.url.toLowerCase().includes(query)
+    );
+    setFilteredLinks(filtered);
+  }, [searchQuery, links]);
 
   async function handleSubmit(e) {
     e.preventDefault();
@@ -96,10 +115,12 @@ export default function DashboardPage() {
 
     if (res.ok) {
       setLinks((prev) => prev.filter((l) => l.code !== codeToDelete));
+      setFilteredLinks((prev) => prev.filter((l) => l.code !== codeToDelete));
     } else {
       alert('Failed to delete link');
     }
   }
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-slate-100">
@@ -114,7 +135,7 @@ export default function DashboardPage() {
             </p>
           </div>
           <span className="text-xs text-slate-500">
-            Assignment – Full Stack Developer
+              Take-Home Assignment: TinyLink
           </span>
         </header>
 
@@ -180,16 +201,29 @@ export default function DashboardPage() {
         </section>
 
         <section className="bg-slate-900/80 border border-slate-800 rounded-2xl p-5 shadow-xl">
-          <div className="flex justify-between items-center mb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
             <h2 className="text-lg font-medium">All links</h2>
-            <span className="text-xs text-slate-500">
-              {links.length} total
-            </span>
+            <div className="flex items-center gap-3 w-full sm:w-auto">
+              <input
+                type="text"
+                placeholder="Search by code or URL..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 sm:flex-none sm:w-64 rounded-xl bg-slate-950 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-sky-500"
+              />
+              <span className="text-xs text-slate-500 whitespace-nowrap">
+                {filteredLinks.length} / {links.length}
+              </span>
+            </div>
           </div>
 
           {links.length === 0 ? (
             <p className="text-sm text-slate-500">
               No links yet. Create your first one above.
+            </p>
+          ) : filteredLinks.length === 0 ? (
+            <p className="text-sm text-slate-500">
+              No links match your search.
             </p>
           ) : (
             <div className="overflow-x-auto text-sm">
@@ -204,30 +238,36 @@ export default function DashboardPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {links.map((link) => (
+                  {filteredLinks.map((link) => (
                     <tr
                       key={link.id}
                       className="border-b border-slate-850 last:border-none"
                     >
                       <td className="py-2 pr-4 font-mono">
-                        <a
-                          href={`/${link.code}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-sky-400 hover:text-sky-300"
-                        >
-                          {baseUrl}/{link.code}
-                        </a>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={`/${link.code}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-sky-400 hover:text-sky-300"
+                          >
+                            {baseUrl}/{link.code}
+                          </a>
+                          <CopyButton text={`${baseUrl}/${link.code}`} />
+                        </div>
                       </td>
                       <td className="py-2 pr-4 max-w-xs truncate">
-                        <a
-                          href={link.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-slate-200 hover:text-sky-300"
-                        >
-                          {link.url}
-                        </a>
+                        <div className="flex items-center gap-2">
+                          <a
+                            href={link.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="text-slate-200 hover:text-sky-300 truncate"
+                          >
+                            {link.url}
+                          </a>
+                          <CopyButton text={link.url} />
+                        </div>
                       </td>
                       <td className="py-2 pr-4">{link.clicks}</td>
                       <td className="py-2 pr-4">
@@ -235,19 +275,21 @@ export default function DashboardPage() {
                           ? new Date(link.lastClickedAt).toLocaleString()
                           : '—'}
                       </td>
-                      <td className="py-2 pr-2 text-right space-x-2">
-                        <Link
-                          href={`/code/${link.code}`}
-                          className="px-2 py-1 rounded-lg border border-slate-700 text-xs hover:border-sky-500 hover:text-sky-300"
-                        >
-                          Stats
-                        </Link>
-                        <button
-                          onClick={() => handleDelete(link.code)}
-                          className="px-2 py-1 rounded-lg border border-red-700 text-xs text-red-300 hover:bg-red-950/40"
-                        >
-                          Delete
-                        </button>
+                      <td className="py-2 pr-2">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/code/${link.code}`}
+                            className="px-2 py-1 rounded-lg border border-slate-700 text-xs hover:border-sky-500 hover:text-sky-300"
+                          >
+                            Stats
+                          </Link>
+                          <button
+                            onClick={() => handleDelete(link.code)}
+                            className="px-2 py-1 rounded-lg border border-red-700 text-xs text-red-300 hover:bg-red-950/40"
+                          >
+                            Delete
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -256,6 +298,22 @@ export default function DashboardPage() {
             </div>
           )}
         </section>
+
+        <footer className="mt-11 pt-8 border-t border-slate-800 text-center">
+          <p className="text-sm text-slate-400">
+            Created by{' '}
+              Praveen
+            {' '}–{' '}
+            <a
+              href="https://github.com/Praveen-jo/tinylink"
+              target="_blank"
+              rel="noreferrer"
+              className="text-sky-400 hover:text-sky-300"
+            >
+              View on GitHub
+            </a>
+          </p>
+        </footer>
       </main>
     </div>
   );

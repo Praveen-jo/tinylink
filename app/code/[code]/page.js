@@ -2,6 +2,7 @@
 import prisma from '../../../lib/prisma';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import CopyButton from '../../CopyButton';
 
 export default async function CodeStatsPage({ params }) {
   const { code } = await params;
@@ -15,6 +16,7 @@ export default async function CodeStatsPage({ params }) {
   }
 
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || '';
+  const shortUrl = `${baseUrl}/${link.code}`;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex items-center justify-center px-4">
@@ -31,26 +33,32 @@ export default async function CodeStatsPage({ params }) {
 
         <div className="space-y-4">
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-400">
+            <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
               Short URL
             </p>
-            <p className="text-lg font-mono">
-              {baseUrl}/{link.code}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-lg font-mono flex-1">
+                {shortUrl}
+              </p>
+              <CopyButton text={shortUrl} />
+            </div>
           </div>
 
           <div>
-            <p className="text-xs uppercase tracking-wide text-slate-400">
+            <p className="text-xs uppercase tracking-wide text-slate-400 mb-1">
               Destination
             </p>
-            <a
-              href={link.url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-sky-400 break-all hover:text-sky-300"
-            >
-              {link.url}
-            </a>
+            <div className="flex items-center gap-2">
+              <a
+                href={link.url}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sky-400 break-all hover:text-sky-300 flex-1"
+              >
+                {link.url}
+              </a>
+              <CopyButton text={link.url} />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-sm">
