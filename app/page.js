@@ -18,6 +18,7 @@ export default function DashboardPage() {
   const [success, setSuccess] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState(null);
   const [deleting, setDeleting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   const baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
@@ -35,6 +36,12 @@ export default function DashboardPage() {
     } catch (err) {
       console.error('Error loading links:', err);
     }
+  }
+
+  async function handleRefresh() {
+    setRefreshing(true);
+    await loadLinks();
+    setRefreshing(false);
   }
 
   useEffect(() => {
@@ -218,7 +225,29 @@ export default function DashboardPage() {
 
         <section className="bg-slate-900/80 border border-slate-800 rounded-2xl p-3 sm:p-5 shadow-xl">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
-            <h2 className="text-lg font-medium">All links</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="text-lg font-medium">All links</h2>
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                className="p-1.5 rounded-lg border border-slate-700 hover:border-sky-500 hover:text-sky-400 disabled:opacity-50 transition-colors"
+                title="Refresh links"
+              >
+                <svg
+                  className={`w-4 h-4 ${refreshing ? 'animate-spin' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                  />
+                </svg>
+              </button>
+            </div>
             <div className="flex items-center gap-3 w-full sm:w-auto">
               <input
                 type="text"
@@ -374,7 +403,7 @@ export default function DashboardPage() {
                             </Link>
                             <button
                               onClick={() => handleDeleteClick(link.code)}
-                              className="px-2 py-1 rounded-lg border border-red-700 text-xs text-red-300 hover:bg-red-950/40"
+                              className="px-2 py-1 rounded-lg border border-red-700 text-xs text-red-300 hover:bg-red-950/40 pointer-events-auto"
                             >
                               Delete
                             </button>
