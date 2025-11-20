@@ -1,7 +1,0 @@
-// prisma.config.ts
-import { defineConfig } from '@prisma/config';
-
-export default defineConfig({
-  // Path to your Prisma schema
-  schema: './prisma/schema.prisma',
-});
